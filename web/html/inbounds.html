@@ -489,6 +489,16 @@
                                                             "pages.client.bulk"}}
                                                         </a-menu-item>
                                                         <a-menu-item
+                                                            key="copyClients"
+                                                            v-if="dbInbound.protocol !== Protocols.AMNEZIAWG && dbInbound.protocol !== Protocols.NATIVEWG"
+                                                        >
+                                                            <a-icon
+                                                                type="copy"
+                                                            ></a-icon>
+                                                            {{ i18n
+                                                            "pages.client.copyFromInbound"}}
+                                                        </a-menu-item>
+                                                        <a-menu-item
                                                             key="resetClients"
                                                         >
                                                             <a-icon
@@ -1388,7 +1398,8 @@
 "component/aPersianDatepicker" .}} {{template "modals/inboundModal"}} {{template
 "modals/promptModal"}} {{template "modals/qrcodeModal"}} {{template
 "modals/textModal"}} {{template "modals/inboundInfoModal"}} {{template
-"modals/clientsModal"}} {{template "modals/clientsBulkModal"}}
+"modals/clientsModal"}} {{template "modals/clientsBulkModal"}} {{template
+"modals/copyClientsModal" .}}
 <script>
     const columns = [
         {
@@ -2245,6 +2256,9 @@
                         break;
                     case "addBulkClient":
                         this.openAddBulkClient(dbInbound.id);
+                        break;
+                    case "copyClients":
+                        copyClientsModal.show(dbInbound);
                         break;
                     case "export":
                         this.inboundLinks(dbInbound.id);
