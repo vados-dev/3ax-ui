@@ -119,17 +119,17 @@ const hMaxValid = 4294967295
 // the config is generated). Accepts a single value ("1") or a range ("100-800").
 func ValidateObfuscation(server *model.AwgServer) error {
 	if server.Jmin > server.Jmax {
-		return fmt.Errorf("Jmin (%d) must not exceed Jmax (%d)", server.Jmin, server.Jmax)
+		return fmt.Errorf("invalid Jmin/Jmax: %d must not exceed %d", server.Jmin, server.Jmax)
 	}
 	if server.S3 < 0 || server.S3 > 64 {
-		return fmt.Errorf("S3 (%d) must be within 0..64", server.S3)
+		return fmt.Errorf("invalid S3 value %d (must be 0..64)", server.S3)
 	}
 	if server.S4 < 0 || server.S4 > 32 {
-		return fmt.Errorf("S4 (%d) must be within 0..32", server.S4)
+		return fmt.Errorf("invalid S4 value %d (must be 0..32)", server.S4)
 	}
 	for i, h := range []string{server.H1, server.H2, server.H3, server.H4} {
 		if err := validateHValue(h); err != nil {
-			return fmt.Errorf("H%d %w", i+1, err)
+			return fmt.Errorf("invalid H%d: %w", i+1, err)
 		}
 	}
 	return nil
