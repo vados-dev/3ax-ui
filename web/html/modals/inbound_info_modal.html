@@ -113,7 +113,7 @@
             </table>
           </template>
         </a-col>
-        <template v-if="dbInbound.hasLink()">
+        <template v-if="dbInbound.hasLink() && !dbInbound.isMtproto">
           {{ i18n "security" }}
           <a-tag :color="inbound.stream.security == 'none' ? 'red' : 'green'">[[
             inbound.stream.security ]]</a-tag>
@@ -140,6 +140,21 @@
               ? inbound.serverName : '' ]]</a-tag>
             <a-tag v-else color="orange">{{ i18n "none" }}</a-tag>
           </template>
+        </template>
+        <!-- MTProto isn't an Xray inbound, so the stream.security/encryption
+             fields are empty; show its real transport security instead. -->
+        <template v-if="dbInbound.isMtproto">
+          {{ i18n "security" }}
+          <a-tag color="green">FakeTLS</a-tag>
+          <br />
+          {{ i18n "encryption" }}
+          <a-tag color="green">MTProto 2.0 (AES-256-IGE)</a-tag>
+          <br />
+          {{ i18n "pages.inbounds.mtproto.fakeTlsDomain" }}
+          <a-tag v-if="inbound.settings.fakeTlsDomain" color="green">[[
+            inbound.settings.fakeTlsDomain ]]</a-tag>
+          <a-tag v-else color="orange">{{ i18n "none" }}</a-tag>
+          <br />
         </template>
         <table v-if="dbInbound.isSS"
           :style="{ marginBottom: '10px', width: '100%' }">

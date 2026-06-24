@@ -2267,14 +2267,18 @@ class Inbound extends XrayCommonClass {
     }
 
     // One Telegram share link per MTProto CLIENT, using that client's own
-    // FakeTLS secret (Telegram accepts the hex secret in t.me/proxy).
+    // FakeTLS secret. Use the tg:// deep-link scheme (not https://t.me/proxy) so
+    // clicking it launches the Telegram app and shows the "Enable proxy?" prompt
+    // directly, instead of opening the t.me web page first. Works the same in a
+    // QR code (the camera / Telegram scanner offers "Open in Telegram"). Telegram
+    // accepts the hex secret as-is.
     genMtprotoLink(address = '', port = this.port, remark = '', client) {
         let addr = address;
         if (ObjectUtil.isEmpty(addr)) {
             addr = !ObjectUtil.isEmpty(this.listen) && this.listen !== "0.0.0.0" ? this.listen : location.hostname;
         }
         const secret = (client && client.secret) ? client.secret : '';
-        return `https://t.me/proxy?server=${addr}&port=${port}&secret=${secret}`;
+        return `tg://proxy?server=${addr}&port=${port}&secret=${secret}`;
     }
 
     genAllLinks(remark = '', remarkModel = '-ieo', client) {

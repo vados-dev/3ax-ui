@@ -336,6 +336,14 @@
                     this.inbound.stream.reality.serverNames = randomTarget.sni;
                 }
             },
+            // Pick a fresh FakeTLS fronting domain for MTProto from the same
+            // curated SNI list used by VLESS Reality.
+            randomizeMtprotoDomain() {
+                if (typeof getRandomRealityTarget !== "undefined") {
+                    this.inbound.settings.fakeTlsDomain =
+                        getRandomRealityTarget().sni;
+                }
+            },
             async getNewEchCert() {
                 inModal.loading(true);
                 const msg = await HttpUtil.post(

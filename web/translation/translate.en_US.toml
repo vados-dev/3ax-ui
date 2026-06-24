@@ -365,6 +365,7 @@
 [pages.inbounds.mtproto]
 "hint" = "MTProto is a Telegram proxy run by an external mtg sidecar (not Xray). Pick a public port and a fronting domain; the FakeTLS secret is generated on save and shared with one Telegram link."
 "fakeTlsDomain" = "FakeTLS Domain"
+"fakeTlsDomainRandom" = "Pick a random fronting domain"
 "secret" = "Secret"
 "secretDesc" = "FakeTLS secret. Leave empty to auto-generate on save, or click the icon to generate one now."
 "secretPlaceholder" = "auto-generated on save"
