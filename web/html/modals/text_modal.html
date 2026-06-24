@@ -1,5 +1,6 @@
 {{define "modals/textModal"}}
 <a-modal id="text-modal" v-model="txtModal.visible" :title="txtModal.title" :closable="true"
+    :width="txtModal.width" :body-style="{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }"
     :class="themeSwitcher.currentTheme">
     <a-input :style="{ overflowY: 'auto' }" type="textarea" v-model="txtModal.content"
         :autosize="{ minRows: 10, maxRows: 20}"></a-input>
@@ -21,10 +22,14 @@
         fileName: '',
         qrcode: null,
         visible: false,
+        // Wide (1200px) for long links/configs, but clamped to the screen so it
+        // never overflows horizontally; the body scrolls so it stays on screen.
+        width: 1200,
         show: function(title = '', content = '', fileName = '') {
             this.title = title;
             this.content = content;
             this.fileName = fileName;
+            this.width = Math.min(1200, window.innerWidth - 48);
             this.visible = true;
         },
         copy: function(content = '') {

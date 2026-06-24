@@ -3513,17 +3513,21 @@
                         }
                         this.onlineClients = nextOnlineClients;
                         if (onlineChanged) {
-                            // Recalculate client counts to update online status
+                            // Recalculate client counts to update online status.
+                            // Use $set: assigning clientCount[id] by index is not
+                            // reactive in Vue 2, so the online-count badge would
+                            // otherwise stay stale while the per-client badges
+                            // (which read the reactive onlineClients) update.
                             this.dbInbounds.forEach((dbInbound) => {
                                 const inbound = this.inbounds.find(
                                     (ib) => ib.id === dbInbound.id,
                                 );
                                 if (inbound && this.clientCount[dbInbound.id]) {
-                                    this.clientCount[dbInbound.id] =
-                                        this.getClientCounts(
-                                            dbInbound,
-                                            inbound,
-                                        );
+                                    this.$set(
+                                        this.clientCount,
+                                        dbInbound.id,
+                                        this.getClientCounts(dbInbound, inbound),
+                                    );
                                 }
                             });
 

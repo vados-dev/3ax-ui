@@ -1,6 +1,7 @@
 {{define "modals/promptModal"}}
 <a-modal id="prompt-modal" v-model="promptModal.visible" :title="promptModal.title" :closable="true"
     @ok="promptModal.ok" :mask-closable="false" :confirm-loading="promptModal.confirmLoading"
+    :width="promptModal.width" :body-style="{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }"
     :ok-text="promptModal.okText" cancel-text='{{ i18n "cancel" }}' :class="themeSwitcher.currentTheme">
     <a-input id="prompt-modal-input" :type="promptModal.type" v-model="promptModal.value"
         :autosize="{minRows: 10, maxRows: 20}" @keydown.enter.native="promptModal.keyEnter"
@@ -15,6 +16,8 @@
         okText: '{{ i18n "sure"}}',
         visible: false,
         confirmLoading: false,
+        // Wide (1200px) for pasting JSON, clamped to the screen.
+        width: 1200,
         keyEnter(e) {
             if (this.type !== 'textarea') {
                 e.preventDefault();
@@ -43,6 +46,7 @@
             this.value = value;
             this.okText = okText;
             this.confirm = confirm;
+            this.width = Math.min(1200, window.innerWidth - 48);
             this.visible = true;
             promptModalApp.$nextTick(() => {
                 document.querySelector('#prompt-modal-input').focus();
