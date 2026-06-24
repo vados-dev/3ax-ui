@@ -2752,7 +2752,7 @@ func (s *InboundService) ResetAllClientTraffics(id int) error {
 	db := database.GetDB()
 	now := time.Now().Unix() * 1000
 
-	return db.Transaction(func(tx *gorm.DB) error {
+	if err := db.Transaction(func(tx *gorm.DB) error {
 		whereText := "inbound_id "
 		if id == -1 {
 			whereText += " > ?"
@@ -2782,7 +2782,50 @@ func (s *InboundService) ResetAllClientTraffics(id int) error {
 			Update("last_traffic_reset_time", now)
 
 		return result.Error
-	})
+	}); err != nil {
+		return err
+	}
+
+	// AWG / WG / MTProto clients live in their own tables — reset them too so the
+	// "reset all client traffic" action covers every protocol.
+	s.resetDedicatedClientTraffics(id)
+	return nil
+}
+
+// resetDedicatedClientTraffics resets the upload/download counters of AWG / WG /
+// MTProto clients for inbound id (id < 0 → all). xray clients are handled by the
+// caller against client_traffics.
+func (s *InboundService) resetDedicatedClientTraffics(id int) {
+	if id < 0 {
+		if err := (&AwgService{}).ResetAllClientTraffics(); err != nil {
+			logger.Warning("reset AWG client traffics failed:", err)
+		}
+		if err := (&WgService{}).ResetAllClientTraffics(); err != nil {
+			logger.Warning("reset WG client traffics failed:", err)
+		}
+		if err := (&MtprotoClientService{}).ResetAllClientTraffics(-1); err != nil {
+			logger.Warning("reset MTProto client traffics failed:", err)
+		}
+		return
+	}
+	ib, err := s.GetInbound(id)
+	if err != nil {
+		return
+	}
+	switch ib.Protocol {
+	case model.AmneziaWG:
+		if err := (&AwgService{}).ResetAllClientTraffics(); err != nil {
+			logger.Warning("reset AWG client traffics failed:", err)
+		}
+	case model.NativeWG:
+		if err := (&WgService{}).ResetAllClientTraffics(); err != nil {
+			logger.Warning("reset WG client traffics failed:", err)
+		}
+	case model.MTProto:
+		if err := (&MtprotoClientService{}).ResetAllClientTraffics(id); err != nil {
+			logger.Warning("reset MTProto client traffics failed:", err)
+		}
+	}
 }
 
 func (s *InboundService) ResetAllTraffics() error {
@@ -2889,6 +2932,43 @@ func (s *InboundService) DelDepletedClients(id int) (err error) {
 	}
 
 	return nil
+}
+
+// DelDedicatedDepletedClients deletes depleted AWG / WG / MTProto clients for
+// inbound id (id < 0 → all). Run AFTER DelDepletedClients (xray) so the single
+// SQLite connection is free — these do their own DB writes and OS-level config
+// reapplies. xray clients are handled by DelDepletedClients itself.
+func (s *InboundService) DelDedicatedDepletedClients(id int) {
+	if id < 0 {
+		if err := (&AwgService{}).DelDepletedClients(); err != nil {
+			logger.Warning("del depleted AWG clients failed:", err)
+		}
+		if err := (&WgService{}).DelDepletedClients(); err != nil {
+			logger.Warning("del depleted WG clients failed:", err)
+		}
+		if err := (&MtprotoClientService{}).DelDepletedClients(-1); err != nil {
+			logger.Warning("del depleted MTProto clients failed:", err)
+		}
+		return
+	}
+	ib, err := s.GetInbound(id)
+	if err != nil {
+		return
+	}
+	switch ib.Protocol {
+	case model.AmneziaWG:
+		if err := (&AwgService{}).DelDepletedClients(); err != nil {
+			logger.Warning("del depleted AWG clients failed:", err)
+		}
+	case model.NativeWG:
+		if err := (&WgService{}).DelDepletedClients(); err != nil {
+			logger.Warning("del depleted WG clients failed:", err)
+		}
+	case model.MTProto:
+		if err := (&MtprotoClientService{}).DelDepletedClients(id); err != nil {
+			logger.Warning("del depleted MTProto clients failed:", err)
+		}
+	}
 }
 
 func (s *InboundService) GetClientTrafficTgBot(tgId int64) ([]*xray.ClientTraffic, error) {

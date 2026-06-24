@@ -913,6 +913,23 @@ func (s *AwgService) ResetAllClientTraffics() error {
 	return nil
 }
 
+// DelDepletedClients deletes non-renewing (reset = 0) AWG clients that are over
+// their traffic quota or past their expiry, then reapplies the server config.
+func (s *AwgService) DelDepletedClients() error {
+	db := database.GetDB()
+	now := time.Now().UnixMilli()
+	var depleted []model.AwgClient
+	if err := db.Where("reset = 0 AND ((total_gb > 0 AND upload + download >= total_gb) OR (expiry_time > 0 AND expiry_time <= ?))", now).Find(&depleted).Error; err != nil {
+		return err
+	}
+	for _, c := range depleted {
+		if err := s.DeleteClient(c.Id); err != nil {
+			logger.Warning("AWG DelDepletedClients: delete", c.Email, "failed:", err)
+		}
+	}
+	return nil
+}
+
 // syncInboundPort updates the port field on the AWG inbound record to match the AWG listen port.
 func (s *AwgService) syncInboundPort(db *gorm.DB, port int) {
 	db.Model(&model.Inbound{}).Where("protocol = ?", model.AmneziaWG).Update("port", port)

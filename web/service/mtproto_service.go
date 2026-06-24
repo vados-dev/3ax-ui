@@ -196,6 +196,44 @@ func (s *MtprotoClientService) DeleteByInbound(inboundId int) error {
 	return database.GetDB().Where("inbound_id = ?", inboundId).Delete(&model.MtprotoClient{}).Error
 }
 
+// ResetAllClientTraffics zeroes the upload/download counters of an inbound's
+// clients (inboundId < 0 → every mtproto client). AllTime is preserved.
+func (s *MtprotoClientService) ResetAllClientTraffics(inboundId int) error {
+	q := database.GetDB().Model(&model.MtprotoClient{})
+	if inboundId >= 0 {
+		q = q.Where("inbound_id = ?", inboundId)
+	}
+	return q.Updates(map[string]any{"upload": 0, "download": 0}).Error
+}
+
+// DelDepletedClients deletes non-renewing (reset = 0) clients that are over their
+// traffic quota or past their expiry (inboundId < 0 → across all mtproto
+// inbounds), then reconciles each affected sidecar.
+func (s *MtprotoClientService) DelDepletedClients(inboundId int) error {
+	db := database.GetDB()
+	now := time.Now().UnixMilli()
+	q := db.Where("reset = 0 AND ((total_gb > 0 AND upload + download >= total_gb) OR (expiry_time > 0 AND expiry_time <= ?))", now)
+	if inboundId >= 0 {
+		q = q.Where("inbound_id = ?", inboundId)
+	}
+	var depleted []model.MtprotoClient
+	if err := q.Find(&depleted).Error; err != nil {
+		return err
+	}
+	affected := map[int]bool{}
+	for _, c := range depleted {
+		if err := db.Where("uuid = ?", c.Uuid).Delete(&model.MtprotoClient{}).Error; err != nil {
+			logger.Warning("mtproto DelDepletedClients: delete", c.Email, "failed:", err)
+			continue
+		}
+		affected[c.InboundId] = true
+	}
+	for ibID := range affected {
+		s.Reconcile(ibID)
+	}
+	return nil
+}
+
 // RehealInbound rebuilds every client's FakeTLS secret for an inbound against the
 // given fronting domain — called when the inbound's fakeTlsDomain changes so the
 // per-client links track the new domain. Returns true if any secret changed.

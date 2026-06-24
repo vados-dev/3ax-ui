@@ -814,6 +814,23 @@ func (s *WgService) ResetAllClientTraffics() error {
 	return nil
 }
 
+// DelDepletedClients deletes non-renewing (reset = 0) WG clients that are over
+// their traffic quota or past their expiry, then reapplies the server config.
+func (s *WgService) DelDepletedClients() error {
+	db := database.GetDB()
+	now := time.Now().UnixMilli()
+	var depleted []model.WgClient
+	if err := db.Where("reset = 0 AND ((total_gb > 0 AND upload + download >= total_gb) OR (expiry_time > 0 AND expiry_time <= ?))", now).Find(&depleted).Error; err != nil {
+		return err
+	}
+	for _, c := range depleted {
+		if err := s.DeleteClient(c.Id); err != nil {
+			logger.Warning("WG DelDepletedClients: delete", c.Email, "failed:", err)
+		}
+	}
+	return nil
+}
+
 // syncInboundPort updates the port field on the WG inbound record.
 func (s *WgService) syncInboundPort(db *gorm.DB, port int) {
 	db.Model(&model.Inbound{}).Where("protocol = ?", model.NativeWG).Update("port", port)

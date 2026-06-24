@@ -489,6 +489,9 @@ func (a *InboundController) delDepletedClients(c *gin.Context) {
 		jsonMsg(c, I18nWeb(c, "somethingWentWrong"), err)
 		return
 	}
+	// AWG / WG / MTProto clients live in their own tables; clean them up after the
+	// xray transaction has committed (single SQLite connection).
+	a.inboundService.DelDedicatedDepletedClients(id)
 	jsonMsg(c, I18nWeb(c, "pages.inbounds.toasts.delDepletedClientsSuccess"), nil)
 }
 

@@ -124,3 +124,51 @@ func TestMtprotoSameEmailFlow(t *testing.T) {
 
 	mtproto.GetManager().StopAll()
 }
+
+// TestMtprotoBulkActions covers the "general actions" that must reach the
+// dedicated mtproto_clients table: reset-all-traffic and delete-depleted.
+func TestMtprotoBulkActions(t *testing.T) {
+	xuilogger.InitLogger(logging.ERROR)
+	dbPath := filepath.Join(t.TempDir(), "x-ui.db")
+	if err := database.InitDB(dbPath); err != nil {
+		t.Fatalf("InitDB: %v", err)
+	}
+	db := database.GetDB()
+	ib := &model.Inbound{Remark: "mt", Enable: false, Port: 38446, Protocol: model.MTProto, Tag: "inbound-38446", Settings: `{"fakeTlsDomain":"www.cloudflare.com"}`}
+	if err := db.Create(ib).Error; err != nil {
+		t.Fatal(err)
+	}
+	svc := &MtprotoClientService{}
+	over := &model.MtprotoClient{InboundId: ib.Id, Email: "over", Enable: true, TotalGB: 50}
+	ok := &model.MtprotoClient{InboundId: ib.Id, Email: "ok", Enable: true}
+	if err := svc.AddClient(over); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.AddClient(ok); err != nil {
+		t.Fatal(err)
+	}
+	db.Model(&model.MtprotoClient{}).Where("uuid = ?", ok.Uuid).Updates(map[string]any{"upload": 10, "download": 20})
+
+	// Reset-all zeroes the resettable counters.
+	if err := svc.ResetAllClientTraffics(ib.Id); err != nil {
+		t.Fatalf("ResetAllClientTraffics: %v", err)
+	}
+	gotOk, _ := svc.GetClientByUuid(ok.Uuid)
+	if gotOk.Upload != 0 || gotOk.Download != 0 {
+		t.Fatalf("reset-all should zero up/down: %+v", gotOk)
+	}
+
+	// Make `over` exceed its quota, then delete-depleted removes only it.
+	db.Model(&model.MtprotoClient{}).Where("uuid = ?", over.Uuid).Updates(map[string]any{"upload": 60})
+	if err := svc.DelDepletedClients(ib.Id); err != nil {
+		t.Fatalf("DelDepletedClients: %v", err)
+	}
+	if _, err := svc.GetClientByUuid(over.Uuid); err == nil {
+		t.Fatal("depleted client should have been deleted")
+	}
+	if _, err := svc.GetClientByUuid(ok.Uuid); err != nil {
+		t.Fatal("healthy client must remain")
+	}
+
+	mtproto.GetManager().StopAll()
+}
