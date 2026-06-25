@@ -377,6 +377,7 @@
 
 [pages.inbounds.toasts]
 "obtain" = "Obtain"
+"realityKeyError" = "Could not generate the Reality keypair. Click 'Get New Cert' in the Reality settings and try again."
 "updateSuccess" = "The update was successful."
 "logCleanSuccess" = "The log has been cleared."
 "inboundsUpdateSuccess" = "Inbounds have been successfully updated."

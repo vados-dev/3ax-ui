@@ -26,7 +26,26 @@
         confirm: null,
         inbound: new Inbound(),
         dbInbound: new DBInbound(),
-        ok() {
+        async ok() {
+            // Auto-generate the Reality keypair if the user picked Reality but
+            // never clicked "Get New Cert": an empty privateKey makes Xray refuse
+            // to start and takes every inbound down with it. Covers create + edit.
+            const inb = inModal.inbound;
+            if (
+                inb &&
+                inb.stream &&
+                inb.stream.security === "reality" &&
+                inb.stream.reality &&
+                !inb.stream.reality.privateKey
+            ) {
+                await inboundModalVueInstance.getNewX25519Cert();
+                if (!inb.stream.reality.privateKey) {
+                    app.$message.error(
+                        '{{ i18n "pages.inbounds.toasts.realityKeyError" }}',
+                    );
+                    return;
+                }
+            }
             ObjectUtil.execute(
                 inModal.confirm,
                 inModal.inbound,

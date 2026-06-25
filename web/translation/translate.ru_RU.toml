@@ -377,6 +377,7 @@
 
 [pages.inbounds.toasts]
 "obtain" = "Получить"
+"realityKeyError" = "Не удалось сгенерировать ключи Reality. Нажмите «Get New Cert» в настройках Reality и попробуйте снова."
 "updateSuccess" = "Обновление прошло успешно"
 "logCleanSuccess" = "Лог был очищен"
 "inboundsUpdateSuccess" = "Подключения успешно обновлены"
