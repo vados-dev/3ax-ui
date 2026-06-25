@@ -2262,6 +2262,10 @@ class Inbound extends XrayCommonClass {
                 return this.genHysteriaLink(address, port, remark, client.auth.length > 0 ? client.auth : this.stream.hysteria.auth);
             case Protocols.MTPROTO:
                 return this.genMtprotoLink(address, port, remark, client);
+            case Protocols.MIXED:
+                return this.genProxyLink('socks', address, port, remark, client);
+            case Protocols.HTTP:
+                return this.genProxyLink('http', address, port, remark, client);
             default: return '';
         }
     }
@@ -2279,6 +2283,24 @@ class Inbound extends XrayCommonClass {
         }
         const secret = (client && client.secret) ? client.secret : '';
         return `tg://proxy?server=${addr}&port=${port}&secret=${secret}`;
+    }
+
+    // One proxy share link per MIXED (SOCKS5) / HTTP client, using the
+    // widely-supported socks:// and http:// URIs (v2rayN / sing-box / NekoBox /
+    // Hiddify). The userinfo is the base64 of "user:pass" with the client email
+    // as the username; clients that don't authenticate still parse the host:port
+    // and #remark fragment.
+    genProxyLink(scheme, address = '', port = this.port, remark = '', client) {
+        let addr = address;
+        if (ObjectUtil.isEmpty(addr)) {
+            addr = !ObjectUtil.isEmpty(this.listen) && this.listen !== "0.0.0.0" ? this.listen : location.hostname;
+        }
+        let userinfo = '';
+        if (client && client.email) {
+            userinfo = Base64.encode(`${client.email}:${client.password || ''}`) + '@';
+        }
+        const fragment = remark ? '#' + encodeURIComponent(remark) : '';
+        return `${scheme}://${userinfo}${addr}:${port}${fragment}`;
     }
 
     genAllLinks(remark = '', remarkModel = '-ieo', client) {

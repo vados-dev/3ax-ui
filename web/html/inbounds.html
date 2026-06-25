@@ -3322,14 +3322,14 @@
                     ).length > 1
                 );
             },
-            inboundLinks(dbInboundId) {
+            async inboundLinks(dbInboundId) {
                 dbInbound = this.dbInbounds.find(
                     (row) => row.id === dbInboundId,
                 );
                 newDbInbound = this.checkFallback(dbInbound);
                 txtModal.show(
                     '{{ i18n "pages.inbounds.export"}}',
-                    newDbInbound.genInboundLinks(this.remarkModel),
+                    await this.genInboundExport(newDbInbound),
                     newDbInbound.remark,
                 );
             },
@@ -3387,10 +3387,35 @@
                     "All-Inbounds-Subs",
                 );
             },
-            exportAllLinks() {
+            // Build the export text for a single inbound. AWG / WG (native IPv6)
+            // configs are generated server-side (one .conf per client), so they
+            // are fetched over the API; every other protocol is rendered
+            // client-side via genInboundLinks (which also covers MIXED & HTTP).
+            async genInboundExport(dbInbound) {
+                if (dbInbound.isAmneziawg || dbInbound.isNativewg) {
+                    const base = dbInbound.isAmneziawg ? "awg" : "wg";
+                    const clients = this.getInboundClients(dbInbound) || [];
+                    const configs = [];
+                    for (const c of clients) {
+                        if (!c.id) continue;
+                        try {
+                            const msg = await HttpUtil.get(
+                                `/panel/api/${base}/client/uuid/${encodeURIComponent(c.id)}/config`,
+                            );
+                            if (msg.success && msg.obj) configs.push(msg.obj);
+                        } catch (e) {
+                            // skip a client whose config can't be generated
+                        }
+                    }
+                    return configs.join("\r\n\r\n");
+                }
+                return dbInbound.genInboundLinks(this.remarkModel);
+            },
+            async exportAllLinks() {
                 let copyText = [];
                 for (const dbInbound of this.dbInbounds) {
-                    copyText.push(dbInbound.genInboundLinks(this.remarkModel));
+                    const text = await this.genInboundExport(dbInbound);
+                    if (text) copyText.push(text);
                 }
                 txtModal.show(
                     '{{ i18n "pages.inbounds.export"}}',
