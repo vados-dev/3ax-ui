@@ -159,6 +159,7 @@
 "panelUpdateDialogDesc" = "這將把 3X-UI 更新到 #version# 並重新啟動面板服務。"
 "panelUpdateCheckPopover" = "面板更新檢查失敗"
 "panelUpdateStartedPopover" = "面板更新已開始"
+"panelUpdateAvailable" = "有可用更新"
 "geofileUpdateDialog" = "您確定要更新地理檔案嗎？"
 "geofileUpdateDialogDesc" = "這將更新 #filename# 檔案。"
 "geofilesUpdateDialogDesc" = "這將更新所有文件。"

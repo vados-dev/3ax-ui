@@ -159,6 +159,7 @@
 "panelUpdateDialogDesc" = "Isso atualizará o 3X-UI para #version# e reiniciará o serviço do painel."
 "panelUpdateCheckPopover" = "Falha na verificação de atualização do painel"
 "panelUpdateStartedPopover" = "Atualização do painel iniciada"
+"panelUpdateAvailable" = "Atualização disponível"
 "geofileUpdateDialog" = "Você realmente deseja atualizar o geofile?"
 "geofileUpdateDialogDesc" = "Isso atualizará o arquivo #filename#."
 "geofilesUpdateDialogDesc" = "Isso atualizará todos os arquivos."

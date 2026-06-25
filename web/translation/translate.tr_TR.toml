@@ -159,6 +159,7 @@
 "panelUpdateDialogDesc" = "Bu, 3X-UI'yi #version# sürümüne güncelleyecek ve panel servisini yeniden başlatacaktır."
 "panelUpdateCheckPopover" = "Panel güncelleme kontrolü başarısız oldu"
 "panelUpdateStartedPopover" = "Panel güncellemesi başlatıldı"
+"panelUpdateAvailable" = "Güncelleme mevcut"
 "geofileUpdateDialog" = "Geofile'ı gerçekten güncellemek istiyor musunuz?"
 "geofileUpdateDialogDesc" = "Bu işlem #filename# dosyasını güncelleyecektir."
 "geofilesUpdateDialogDesc" = "Bu, tüm dosyaları güncelleyecektir."

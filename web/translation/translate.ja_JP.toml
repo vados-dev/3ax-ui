@@ -159,6 +159,7 @@
 "panelUpdateDialogDesc" = "これにより3X-UIが#version#に更新され、パネルサービスが再起動されます。"
 "panelUpdateCheckPopover" = "パネルの更新確認に失敗しました"
 "panelUpdateStartedPopover" = "パネルの更新を開始しました"
+"panelUpdateAvailable" = "アップデートがあります"
 "geofileUpdateDialog" = "ジオファイルを本当に更新しますか？"
 "geofileUpdateDialogDesc" = "これにより#filename#ファイルが更新されます。"
 "geofilesUpdateDialogDesc" = "これにより、すべてのファイルが更新されます。"

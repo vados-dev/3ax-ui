@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -73,7 +74,7 @@ func (s *PanelService) StartUpdate() error {
 	}
 
 	mainFolder, serviceFolder := resolveUpdateFolders()
-	updateScript := fmt.Sprintf("set -o pipefail; %s -fLs https://raw.githubusercontent.com/MHSanaei/3x-ui/main/update.sh | %s", shellQuote(curl), shellQuote(bash))
+	updateScript := fmt.Sprintf("set -o pipefail; %s -fLs https://raw.githubusercontent.com/coinman-dev/3ax-ui/main/update.sh | %s", shellQuote(curl), shellQuote(bash))
 
 	if systemdRun, err := exec.LookPath("systemd-run"); err == nil {
 		unitName := fmt.Sprintf("x-ui-web-update-%d", time.Now().Unix())
@@ -113,9 +114,27 @@ func (s *PanelService) StartUpdate() error {
 	return nil
 }
 
+var (
+	panelVerCacheMu sync.Mutex
+	panelVerCache   string
+	panelVerCacheAt time.Time
+)
+
+// fetchLatestPanelVersion returns the tag of the latest 3AX-UI release on GitHub.
+// GitHub's /releases/latest returns the newest non-prerelease, so only stable
+// releases trigger the "update available" hint (betas are pre-releases). Result
+// is cached for an hour to avoid hammering the API on dashboard refreshes.
 func fetchLatestPanelVersion() (string, error) {
+	panelVerCacheMu.Lock()
+	if panelVerCache != "" && time.Since(panelVerCacheAt) < time.Hour {
+		v := panelVerCache
+		panelVerCacheMu.Unlock()
+		return v, nil
+	}
+	panelVerCacheMu.Unlock()
+
 	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get("https://api.github.com/repos/MHSanaei/3x-ui/releases/latest")
+	resp, err := client.Get("https://api.github.com/repos/coinman-dev/3ax-ui/releases/latest")
 	if err != nil {
 		return "", err
 	}
@@ -131,6 +150,11 @@ func fetchLatestPanelVersion() (string, error) {
 	if release.TagName == "" {
 		return "", fmt.Errorf("latest panel release tag is empty")
 	}
+
+	panelVerCacheMu.Lock()
+	panelVerCache = release.TagName
+	panelVerCacheAt = time.Now()
+	panelVerCacheMu.Unlock()
 	return release.TagName, nil
 }
 
@@ -179,12 +203,18 @@ func compareVersionStrings(a string, b string) (int, bool) {
 
 func parseVersionParts(version string) ([3]int, bool) {
 	var result [3]int
-	parts := strings.Split(normalizeVersionTag(version), ".")
-	if len(parts) != 3 {
+	s := normalizeVersionTag(version)
+	// Drop any pre-release / git-describe suffix so "1.6.3-beta" or
+	// "1.5.0-beta-16-g1b74ce41-dirty" compare by their numeric X.Y.Z prefix.
+	if i := strings.IndexByte(s, '-'); i >= 0 {
+		s = s[:i]
+	}
+	parts := strings.Split(s, ".")
+	if len(parts) < 3 {
 		return result, false
 	}
-	for i, part := range parts {
-		n, err := strconv.Atoi(part)
+	for i := 0; i < 3; i++ {
+		n, err := strconv.Atoi(parts[i])
 		if err != nil {
 			return result, false
 		}

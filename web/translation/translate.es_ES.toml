@@ -127,6 +127,7 @@
 "panelUpdateDialogDesc" = "Esto actualizará 3AX-UI a #version# y reiniciará el servicio del panel."
 "panelUpdateCheckPopover" = "Error al comprobar la actualización del panel"
 "panelUpdateStartedPopover" = "Actualización del panel iniciada"
+"panelUpdateAvailable" = "Actualización disponible"
 "customGeoTitle" = "GeoSite / GeoIP personalizado"
 "customGeoAdd" = "Añadir"
 "customGeoType" = "Tipo"

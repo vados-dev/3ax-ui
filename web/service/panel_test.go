@@ -13,6 +13,11 @@ func TestIsNewerVersion(t *testing.T) {
 		{"v2.9.3", "2.9.3", false},
 		{"v2.9.2", "2.9.3", false},
 		{"v3.0.0", "2.9.3", true},
+		// A beta / git-describe current version compares by its numeric prefix,
+		// and the latest stable release must never look like a downgrade.
+		{"v1.6.4", "1.6.3-beta", true},
+		{"v1.6.4", "1.5.0-beta-16-g1b74ce41-dirty", true},
+		{"v1.3.3", "1.6.3-beta", false},
 	}
 
 	for _, tc := range cases {

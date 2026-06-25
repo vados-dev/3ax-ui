@@ -127,6 +127,7 @@
 "panelUpdateDialogDesc" = "Thao tác này sẽ cập nhật 3AX-UI lên #version# và khởi động lại dịch vụ bảng điều khiển."
 "panelUpdateCheckPopover" = "Kiểm tra cập nhật bảng điều khiển thất bại"
 "panelUpdateStartedPopover" = "Đã bắt đầu cập nhật bảng điều khiển"
+"panelUpdateAvailable" = "Có bản cập nhật"
 "customGeoTitle" = "GeoSite / GeoIP tùy chỉnh"
 "customGeoAdd" = "Thêm"
 "customGeoType" = "Loại"

@@ -259,6 +259,13 @@
                       <span>v{{ .cur_ver }}</span>
                     </a-tag>
                   </a>
+                  <a v-if="panelUpdate.updateAvailable" rel="noopener"
+                    href="https://github.com/coinman-dev/3ax-ui/releases/latest" target="_blank">
+                    <a-tag color="orange">
+                      <a-icon type="arrow-up"></a-icon>
+                      <span>{{ i18n "pages.index.panelUpdateAvailable" }} [[ panelUpdate.latestVersion ]]</span>
+                    </a-tag>
+                  </a>
                   <a rel="noopener" href="https://t.me/XrayUI" target="_blank">
                     <a-tag color="green">
                       <span>@XrayUI</span>
@@ -1085,6 +1092,7 @@
       showAlert: false,
       showIp: false,
       ipLimitEnable: false,
+      panelUpdate: { updateAvailable: false, latestVersion: '' },
       activeProtocol: 'xray',
       customGeoColumns,
       customGeoList: [],
@@ -1215,6 +1223,20 @@
       loading(spinning, tip = '{{ i18n "loading"}}') {
         this.loadingStates.spinning = spinning;
         this.loadingTip = tip;
+      },
+      // Ask the backend whether a newer 3AX-UI release exists on GitHub and
+      // surface a clickable "update available" hint next to the version. Silent
+      // on any failure (offline, GitHub rate limit, etc.).
+      async checkPanelUpdate() {
+        try {
+          const msg = await HttpUtil.get('/panel/api/server/getPanelUpdateInfo');
+          if (msg && msg.success && msg.obj && msg.obj.updateAvailable) {
+            this.panelUpdate.updateAvailable = true;
+            this.panelUpdate.latestVersion = msg.obj.latestVersion || '';
+          }
+        } catch (e) {
+          /* non-fatal */
+        }
       },
       async getStatus() {
         try {
@@ -1595,6 +1617,9 @@
 
       // Initial status fetch
       await this.getStatus();
+
+      // Best-effort check for a newer panel release on GitHub (non-blocking).
+      this.checkPanelUpdate();
 
       // Setup WebSocket for real-time updates
       if (window.wsClient) {

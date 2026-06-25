@@ -159,6 +159,7 @@
 "panelUpdateDialogDesc" = "Ini akan memperbarui 3X-UI ke #version# dan me-restart layanan panel."
 "panelUpdateCheckPopover" = "Pemeriksaan pembaruan panel gagal"
 "panelUpdateStartedPopover" = "Pembaruan panel dimulai"
+"panelUpdateAvailable" = "Pembaruan tersedia"
 "geofileUpdateDialog" = "Apakah Anda yakin ingin memperbarui geofile?"
 "geofileUpdateDialogDesc" = "Ini akan memperbarui file #filename#."
 "geofilesUpdateDialogDesc" = "Ini akan memperbarui semua berkas."
